@@ -15,23 +15,41 @@ class NewtonsCradle extends THREE.Group {
 		let baseM = new THREE.MeshLambertMaterial({
 			color: new THREE.Color(0, 0.75, 0.75).multiplyScalar(0.5),
 		});
-		let base = new THREE.Mesh(baseG, baseM);
-		this.add(base);
+		let baseG2 = new RoundedBoxGeometry(14, 1, 7, 30, 0.25).translate(25, 0.5, 0);
+		let baseM2 = new THREE.MeshLambertMaterial({
+			color: new THREE.Color(0, 0.75, 0.75).multiplyScalar(0.5),
+		});
+		// let base = new THREE.Mesh(baseG, baseM);
+		// let base2 = new THREE.Mesh(baseG2, baseM2);
+
+		// this.add(base);
+		// this.add(base2);
 
 		// frame
 		let frameR = 0.25;
 		let frameRound = 1.5;
+		let frameRound2 = 1.5;
+
 		let frameW = 12;
 		let frameH = 14;
 		let frameD = 5;
 		let radialSegs = 16;
 		let gs = [];
+		let gs2 = [];
+
 		let cornerRound = new THREE.QuadraticBezierCurve3(
 			new THREE.Vector3(-frameRound, 0, 0),
 			new THREE.Vector3(-frameRound, -frameRound, 0),
 			new THREE.Vector3(0, -frameRound, 0)
 		);
+		let cornerRound2 = new THREE.QuadraticBezierCurve3(
+			new THREE.Vector3(-frameRound2, 0, 0),
+			new THREE.Vector3(-frameRound2, -frameRound2, 0),
+			new THREE.Vector3(0, -frameRound2, 0)
+		);
 		let tubeG = new THREE.TubeGeometry(cornerRound, 10, frameR, radialSegs);
+		let tubeG2 = new THREE.TubeGeometry(cornerRound2, 10, frameR, radialSegs);
+
 		let vertG = new THREE.CylinderGeometry(
 			frameR,
 			frameR,
@@ -71,16 +89,68 @@ class NewtonsCradle extends THREE.Group {
 				.translate(0, frameH, frameD * 0.5)
 		);
 
+		let vertG2 = new THREE.CylinderGeometry(
+			frameR,
+			frameR,
+			frameH - frameRound2,
+			radialSegs,
+			1,
+			true
+		).translate(0, (frameH - frameRound2) * 0.5, 0);
+		gs2.push(
+			tubeG2
+				.clone()
+				.rotateZ(Math.PI * -0.5)
+				.translate(
+					-frameW * 0.5 + frameRound2,
+					frameH - frameRound2,
+					frameD * 0.5
+				),
+			tubeG2
+				.clone()
+				.rotateZ(Math.PI)
+				.translate(
+					frameW * 0.5 - frameRound2,
+					frameH - frameRound2,
+					frameD * 0.5
+				),
+			vertG2.clone().translate(-frameW * 0.5, 0, frameD * 0.5),
+			vertG2.clone().translate(frameW * 0.5, 0, frameD * 0.5),
+			new THREE.CylinderGeometry(
+				frameR,
+				frameR,
+				frameW - frameRound2 * 2,
+				radialSegs,
+				1,
+				true
+			)
+				.rotateZ(Math.PI * 0.5)
+				.translate(0, frameH, frameD * 0.5)
+		);
+
 		let g = mergeBufferGeometries(gs);
+		let g2 = mergeBufferGeometries(gs2);
+
 		g = mergeBufferGeometries([g.clone(), g.clone().translate(0, 0, -frameD)]);
+		g2 = mergeBufferGeometries([g2.clone(), g2.clone().translate(0, 0, -frameD)]);
+
 		let tubeM = new THREE.MeshLambertMaterial();
 		let frame = new THREE.Mesh(g, tubeM);
-		frame.position.y = 1;
+		let frame2 = new THREE.Mesh(g2, tubeM);
+
+		
+		// frame.position.y = 1;
+		frame2.position.x = 25;
+		// frame2.position.y = 1;
+
 		this.add(frame);
+		this.add(frame2);
 
 		// balls of the pendulum
 		let ballsCount = 5;
 		let ballSystemGeoms = [];
+		let ballSystemGeoms2 = [];
+
 		let ballRadius = 1.115;
 		let stringHeight = frameH - 1.5 - 1.115;
 		let stringLength = Math.sqrt(
@@ -113,6 +183,8 @@ class NewtonsCradle extends THREE.Group {
 		);
 
 		let ballSystemGeom = mergeBufferGeometries(ballSystemGeoms);
+		let ballSystemGeom2 = mergeBufferGeometries(ballSystemGeoms);
+
 		let ballSystemMat = new THREE.MeshStandardMaterial({
 			color: 0x888888,
 			metalness: 1,
@@ -123,16 +195,21 @@ class NewtonsCradle extends THREE.Group {
 			ballSystemMat,
 			ballsCount
 		);
+		let ballSystem2 = new THREE.InstancedMesh(
+			ballSystemGeom2,
+			ballSystemMat,
+			ballsCount
+		);
 
 		let moveableDummies = new Array(ballsCount).fill().map((p, idx) => {
 			let ballDummy = new THREE.Object3D();
-			ballDummy.position.x = (-(ballsCount - 1) * 0.5 + idx) * 2.23;
+			ballDummy.position.x = (-(ballsCount - 23) * 0.5 + idx) * 2.23;
 			ballDummy.updateMatrix();
 			ballSystem.setMatrixAt(idx, ballDummy.matrix);
 			ballDummy.initPhase = Math.PI;
 			ballDummy.maxAngle = THREE.MathUtils.degToRad(5);
 			ballDummy.instanceIndex = idx;
-			if (idx === 0 || idx === ballsCount - 1) {
+			if ( idx === ballsCount - 1) {
 				ballDummy.initPhase = 0;
 				ballDummy.clampPhase = {
 					min: idx === 0 ? -Math.PI : 0,
@@ -142,23 +219,76 @@ class NewtonsCradle extends THREE.Group {
 			}
 			return ballDummy;
 		});
+
+		let moveableDummies2 = new Array(ballsCount).fill().map((p, idx) => {
+			let ballDummy = new THREE.Object3D();
+			ballDummy.position.x = (-(ballsCount - 1) * 0.5 + idx) * 2.23;
+			ballDummy.updateMatrix();
+			ballSystem.setMatrixAt(idx, ballDummy.matrix);
+			ballDummy.initPhase = Math.PI;
+			ballDummy.maxAngle = THREE.MathUtils.degToRad(5);
+			ballDummy.instanceIndex = idx;
+			if (idx === 0 ) {
+				ballDummy.initPhase = 0;
+				ballDummy.clampPhase = {
+					min: idx === 0 ? -Math.PI : 0,
+					max: idx === 0 ? 0 : Math.PI,
+				};
+				ballDummy.maxAngle = Math.PI * 0.125;
+			}
+			return ballDummy;
+		});
+
 		ballSystem.position.y = frameH;
+		ballSystem2.position.y = frameH;
+
 		frame.add(ballSystem);
+		frame.add(ballSystem2);
+
+		//Adding the center Ball
+		let centerBallGeo = new THREE.SphereGeometry(ballRadius+0.5, 36, 18);
+		centerBallGeo.translate(7.0, 1.5, 0.0);
+		let centerBall = new THREE.Mesh(centerBallGeo, ballSystemMat);
+		this.add(centerBall);
 
 		this.update = (t) => {
 			moveableDummies.forEach((md) => {
 				let a = Math.sin(t * Math.PI * 2) * md.maxAngle;
-				if (md.clampPhase) {
+				if (md.clampPhase && t%3>=1.5) {
 					let c = md.clampPhase;
 					let mn = c.min,
 						mx = c.max;
 					a = THREE.MathUtils.clamp(a, mn, mx);
+					// Only the balls on the edge will have a motion
+					md.rotation.z = a;
+					md.updateMatrix();
 				}
-				md.rotation.z = a;
-				md.updateMatrix();
 				ballSystem.setMatrixAt(md.instanceIndex, md.matrix);
 			});
+			moveableDummies2.forEach((md) => {
+				let a = Math.sin(t * Math.PI * 2) * md.maxAngle;
+				if (md.clampPhase && t%3<=1.2) {
+					let c = md.clampPhase;
+					let mn = c.min,
+						mx = c.max;
+					a = THREE.MathUtils.clamp(a, mn, mx);
+					// Only the balls on the edge will have a motion
+					md.rotation.z = a;
+					md.updateMatrix((1, 0.0, 0.0), 0.01);
+				}
+				ballSystem2.setMatrixAt(md.instanceIndex, md.matrix);
+			});
+			if(t%3>=1.2 && t%3<1.5)
+			{
+				centerBallGeo.translate(0.6, 0.0, 0.0);
+			}
+			if(t%3>=2.7)
+			{
+				centerBallGeo.translate(-0.6, 0.0, 0.0);
+			}
 			ballSystem.instanceMatrix.needsUpdate = true;
+			ballSystem2.instanceMatrix.needsUpdate = true;
+
 		};
 	}
 }
@@ -166,8 +296,8 @@ class NewtonsCradle extends THREE.Group {
 let bgColor = new THREE.Color(0x222222);
 let scene = new THREE.Scene();
 scene.background = bgColor;
-let camera = new THREE.PerspectiveCamera(30, innerWidth / innerHeight, 1, 1000);
-camera.position.set(-20, 7, 20).setLength(37);
+let camera = new THREE.PerspectiveCamera(50, innerWidth / innerHeight, 1, 1000);
+camera.position.set(-30, 17, 20).setLength(37);
 let renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(innerWidth, innerHeight);
 renderer.shadowMap.enabled = true;
@@ -189,7 +319,7 @@ let controls = new OrbitControls(camera, renderer.domElement);
 controls.target.set(0, 7, 0);
 controls.enablePan = false;
 controls.enableDamping = true;
-//controls.autoRotate = true;
+// controls.autoRotate = true; //rotating apne aap
 controls.maxPolarAngle = Math.PI * 0.5;
 controls.update();
 
@@ -200,8 +330,8 @@ light.position.set(0, 7, 0);
 light.add(lightTarget);
 light.target = lightTarget;
 light.castShadow = true;
-let shadowCamHalfSize = 25;
-let multiplier = 0.4;
+let shadowCamHalfSize = 50;
+let multiplier = 0.7;
 light.shadow.camera.top = shadowCamHalfSize * multiplier;
 light.shadow.camera.bottom = -shadowCamHalfSize * multiplier;
 light.shadow.camera.left = -shadowCamHalfSize * multiplier;
@@ -212,8 +342,8 @@ light.shadow.mapSize.width = light.shadow.mapSize.height = 1024;
 //console.log(light.shadow.camera);
 scene.add(light, new THREE.AmbientLight(0xffffff, 0.5));
 
-//let shadowCameraHelper = new THREE.CameraHelper(light.shadow.camera);
-//scene.add(shadowCameraHelper);
+// let shadowCameraHelper = new THREE.CameraHelper(light.shadow.camera);
+// scene.add(shadowCameraHelper);
 
 let newtonsCradle = new NewtonsCradle();
 newtonsCradle.traverse((part) => {
@@ -382,7 +512,7 @@ let sphereM = new THREE.MeshBasicMaterial({
 });
 let sphere = new THREE.Mesh(sphereG, sphereM);
 sphere.frustumCulled = false;
-// scene.add(sphere);
+// scene.add(sphere); //background balls
 // </spheres>
 
 let ground = new THREE.Mesh(
@@ -403,23 +533,23 @@ let ground = new THREE.Mesh(
 				`#include <dithering_fragment>
 
 					vec3 cTotal = bgColor;
-					vec2 dmUvHalfStep = (vUv / 32.) * 0.5;
-					vec2 cId = floor(vUv * 32.);
-					for(int i = -1; i <= 1; i++){
-						for(int j = -1; j <= 1; j++){
-							// get data from texture
-							vec2 currCID = cId + vec2(j,i);
-							vec2 dmUv = currCID / 32. + dmUvHalfStep;
-							vec4 dataMapData = texture2D(dataMap, dmUv);
+					// vec2 dmUvHalfStep = (vUv / 32.) * 0.5;
+					// vec2 cId = floor(vUv * 32.);
+					// for(int i = -1; i <= 1; i++){
+					// 	for(int j = -1; j <= 1; j++){
+					// 		// get data from texture
+					// 		vec2 currCID = cId + vec2(j,i);
+					// 		vec2 dmUv = currCID / 32. + dmUvHalfStep;
+					// 		vec4 dataMapData = texture2D(dataMap, dmUv);
 							
-							vec3 dataMapColor = hsb2rgb(dataMapData.w == 0. ? bgColor : vec3(dataMapData.b, 1., 1.));
+					// 		vec3 dataMapColor = hsb2rgb(dataMapData.w == 0. ? bgColor : vec3(dataMapData.b, 1., 1.));
 							
-							vec2 cUv = fract(vUv * 32.) - (vec2(j,i) + dataMapData.rg);
-							float lightC = smoothstep(1.5 * dataMapData.w, 0., length(cUv));
-							lightC = pow(lightC, 2.7);
-							cTotal += dataMapColor * lightC * 0.875;
-						}
-					}
+					// 		vec2 cUv = fract(vUv * 32.) - (vec2(j,i) + dataMapData.rg);
+					// 		float lightC = smoothstep(1.5 * dataMapData.w, 0., length(cUv));
+					// 		lightC = pow(lightC, 2.7);
+					// 		cTotal += dataMapColor * lightC * 0.875;
+					// 	}
+					// }
 					
 					float f = smoothstep(0.2, 0.05, length(vUv - 0.5)); // central spot
 					f *= f;
@@ -433,7 +563,7 @@ let ground = new THREE.Mesh(
 );
 ground.material.defines = { USE_UV: "" };
 ground.receiveShadow = true;
-// scene.add(ground);
+scene.add(ground);
 
 let clock = new THREE.Clock();
 
