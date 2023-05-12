@@ -1,0 +1,11 @@
+body{
+  margin: 0;
+  padding: 0;
+}
+.toplevel {
+  position: relative;
+}
+
+.buttons {
+  position: absolute;
+}
