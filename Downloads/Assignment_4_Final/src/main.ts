@@ -1,5 +1,7 @@
 import * as THREE from 'three'
 import WebGL from 'three/addons/capabilities/WebGL.js'
+import {vertexPhongShaderSrc} from './shaders/vertexP.ts'
+import {fragmentPhongShaderSrc} from './shaders/fragmentP.ts'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import './style.css'
 
@@ -49,7 +51,7 @@ const controls = new OrbitControls(camera, renderer.domElement);
 // Making the ball
 class Pendulum {
     ballGeometry: THREE.SphereGeometry
-    ballMaterial: THREE.MeshPhongMaterial
+    ballMaterial: THREE.ShaderMaterial
     ball: THREE.Mesh
     lineGeometry: THREE.BufferGeometry
     lineMaterial: THREE.LineBasicMaterial
@@ -95,7 +97,16 @@ class Pendulum {
         
         // Creates the ball
         this.ballGeometry = new THREE.SphereGeometry(radius, 32, 16);
-        this.ballMaterial = new THREE.MeshPhongMaterial({color:0xffff00});
+        // this.ballMaterial = new THREE.MeshPhongMaterial({color:0xffff00});
+        this.ballMaterial = new THREE.ShaderMaterial({
+			vertexShader: vertexPhongShaderSrc,
+			fragmentShader: fragmentPhongShaderSrc,
+			wireframe: false,
+			uniforms: {
+                Kd: {value: 0.5},
+                Ks: {value: 0.5}
+            },
+		});
         this.ball = new THREE.Mesh(this.ballGeometry, this.ballMaterial);
         this.ball.castShadow = true;
         scene.add(this.ball);
@@ -257,7 +268,16 @@ scene.add(platform);
 
 // Creating the ball
 const ballGeometry = new THREE.SphereGeometry(3, 32, 16);
-const ballMaterial = new THREE.MeshStandardMaterial({color:0xffff00});
+// const ballMaterial = new THREE.MeshStandardMaterial({color:0xffff00});
+const ballMaterial = new THREE.ShaderMaterial({
+    vertexShader: vertexPhongShaderSrc,
+    fragmentShader: fragmentPhongShaderSrc,
+    wireframe: false,
+    uniforms: {
+        Kd: {value: 0.5},
+        Ks: {value: 0.5}
+    },
+});
 const ball = new THREE.Mesh(ballGeometry, ballMaterial);
 var ballSpeed = 0;
 ball.position.set(13+0.004, -9.5, 0)
